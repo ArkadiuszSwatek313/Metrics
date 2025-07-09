@@ -115,16 +115,16 @@ def collect_metrics():
             '--query-gpu=utilization.gpu,memory.used,memory.total,memory.free,power.draw,power.limit,temperature.gpu',
             '--format=csv,noheader,nounits'
         ]).decode('utf-8')
-        for line in output.strip().split('\n'):
+        for idx, line in enumerate(output.strip().split('\n')):
             util, mem_used, mem_total, mem_free, power_draw, power_limit, temp = map(float, line.split(', '))
             metrics.extend([
-                f"gpu_utilization {util}",
-                f"gpu_memory_used {mem_used}",
-                f"gpu_memory_total {mem_total}",
-                f"gpu_memory_free {mem_free}",
-                f"gpu_power_watts {power_draw}",
-                f"gpu_power_limit_watts {power_limit}",
-                f"gpu_temperature {temp}"
+                f'gpu_utilization{{gpu="{idx}"}} {util}',
+                f'gpu_memory_used{{gpu="{idx}"}} {mem_used}',
+                f'gpu_memory_total{{gpu="{idx}"}} {mem_total}',
+                f'gpu_memory_free{{gpu="{idx}"}} {mem_free}',
+                f'gpu_power_watts{{gpu="{idx}"}} {power_draw}',
+                f'gpu_power_limit_watts{{gpu="{idx}"}} {power_limit}',
+                f'gpu_temperature{{gpu="{idx}"}} {temp}'
             ])
     except:
         pass
