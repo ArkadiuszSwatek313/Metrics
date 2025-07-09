@@ -48,9 +48,12 @@ def collect_metrics():
         ]
     }
 
+    added_types = set()
     for mtype, names in metric_types.items():
         for name in names:
-            metrics.append(f"# TYPE {name} {mtype}")
+            if name not in added_types:
+                metrics.append(f"# TYPE {name} {mtype}")
+                added_types.add(name)
 
     # === CPU ===
     metrics.append(f"cpu_usage_percent {psutil.cpu_percent(interval=1)}")
