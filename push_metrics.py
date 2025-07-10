@@ -197,6 +197,7 @@ def collect_metrics():
 
     # === Heartbeat ===
     metrics.append(f'heartbeat_timestamp{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {int(time.time())}')
+    metrics.append(f'up{{job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
 
     return "\n".join(metrics) + "\n"
 
