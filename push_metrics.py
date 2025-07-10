@@ -168,15 +168,17 @@ def collect_metrics():
 
     try:
         output = subprocess.check_output(["nvidia-smi"], stderr=subprocess.STDOUT).decode()
-        match = re.search(r"Driver Version:\s+(\S+)", output)
+        match = re.search(r"Driver Version:\s+(\d+)\.(\d+)", output)
         if match:
-            driver_version = match.group(1)
+            major = match.group(1)
+            minor = match.group(2)
+            version_float = float(f"{major}.{minor}")
             metrics.append(f'# HELP nvidia_driver_version_numeric NVIDIA driver version as numeric value')
             metrics.append(f'# TYPE nvidia_driver_version_numeric gauge')
             metrics.append(
-                f'nvidia_driver_version_numeric{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {driver_version}')
+                f'nvidia_driver_version_numeric{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {version_float}')
     except Exception as e:
-        logging.warning(f"Failed to convert NVIDIA driver version to numeric: {e}")
+        logging.warning(f"Failed to parse NVIDIA driver version: {e}")
 
     # === CPU temperature ===
     try:
