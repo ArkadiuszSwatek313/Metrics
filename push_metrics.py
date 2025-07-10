@@ -97,6 +97,15 @@ def collect_metrics():
     if io:
         metrics.append(f"disk_io_read_bytes_total {io.read_bytes}")
         metrics.append(f"disk_io_write_bytes_total {io.write_bytes}")
+    try:
+        output = subprocess.check_output(['lsblk', '-b', '-dn', '-o', 'SIZE']).decode()
+        total_physical_disk_bytes = sum(int(line.strip()) for line in output.strip().splitlines())
+        metrics.append(f"# HELP physical_disk_total_bytes Total physical disk capacity (including unallocated)")
+        metrics.append(f"# TYPE physical_disk_total_bytes gauge")
+        metrics.append(
+            f"physical_disk_total_bytes{{job=\"{JOB_NAME}\",instance=\"{HOSTNAME}\"}} {total_physical_disk_bytes}")
+    except Exception as e:
+        logging.warning(f"Failed to get physical disk size: {e}")
 
     # === Sieć ===
     net = psutil.net_io_counters()
@@ -162,11 +171,10 @@ def collect_metrics():
         match = re.search(r"Driver Version:\s+(\S+)", output)
         if match:
             driver_version = match.group(1)
-            version_float = float(driver_version.replace('.', '', 1).replace('.', ''))  # np. 535.10405
             metrics.append(f'# HELP nvidia_driver_version_numeric NVIDIA driver version as numeric value')
             metrics.append(f'# TYPE nvidia_driver_version_numeric gauge')
             metrics.append(
-                f'nvidia_driver_version_numeric{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {version_float}')
+                f'nvidia_driver_version_numeric{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {driver_version}')
     except Exception as e:
         logging.warning(f"Failed to convert NVIDIA driver version to numeric: {e}")
 
