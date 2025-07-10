@@ -208,7 +208,7 @@ def collect_metrics():
         logging.warning(f"OS version numeric parse error: {e}")
 
     # === Heartbeat ===
-    metrics.append(f'heartbeat_timestamp{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {int(time.time())}')
+    metrics.append(f'heartbeat_timestamp{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {int(time.time() * 1000)}')
     metrics.append(f'up{{job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
 
     return "\n".join(metrics) + "\n"
