@@ -162,38 +162,40 @@ def collect_metrics():
         match = re.search(r"Driver Version:\s+(\S+)", output)
         if match:
             driver_version = match.group(1)
-            metrics.append(f'nvidia_driver_version{{job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
-            metrics.append(f'# HELP nvidia_driver_version_string Driver version as label')
-            metrics.append(f'# TYPE nvidia_driver_version_string gauge')
+            version_float = float(driver_version.replace('.', '', 1).replace('.', ''))  # np. 535.10405
+            metrics.append(f'# HELP nvidia_driver_version_numeric NVIDIA driver version as numeric value')
+            metrics.append(f'# TYPE nvidia_driver_version_numeric gauge')
             metrics.append(
-                f'nvidia_driver_version_string{{version="{driver_version}",job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
+                f'nvidia_driver_version_numeric{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {version_float}')
     except Exception as e:
-        logging.warning(f"GPU driver version error: {e}")
+        logging.warning(f"Failed to convert NVIDIA driver version to numeric: {e}")
 
     # === CPU temperature ===
     try:
-        output = subprocess.check_output(['sensors']).decode('utf-8')
+        output = subprocess.check_output(['sensors'], stderr=subprocess.STDOUT).decode('utf-8')
         for line in output.splitlines():
-            if "Core 0" in line or "Package id" in line:
+            if re.search(r'(Core\s+\d+|Package id|Tctl|Tdie)', line):
                 match = re.search(r'\+?(\d+\.\d+)', line)
                 if match:
-                    metrics.append(f"cpu_temperature {float(match.group(1))}")
-                    break
-    except:
-        pass
+                    temp = float(match.group(1))
+                    metrics.append(f"cpu_temperature{{sensor=\"{line.strip().split(':')[0]}\"}} {temp}")
+    except Exception as e:
+        logging.warning(f"CPU temperature read error: {e}")
 
     # === Ubuntu version ===
     try:
         with open("/etc/os-release") as f:
             for line in f:
-                if line.startswith("PRETTY_NAME="):
-                    os_version = line.strip().split("=")[1].strip('"')
+                if line.startswith("VERSION_ID="):
+                    raw_version = line.strip().split("=")[1].strip('"')
                     break
-        metrics.append(f'# HELP system_os_version_string OS version as label')
-        metrics.append(f'# TYPE system_os_version_string gauge')
-        metrics.append(f'system_os_version_string{{version="{os_version}",job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
+
+        version_float = float(raw_version)
+        metrics.append(f'# HELP system_os_version_numeric OS version as numeric value')
+        metrics.append(f'# TYPE system_os_version_numeric gauge')
+        metrics.append(f'system_os_version_numeric{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {version_float}')
     except Exception as e:
-        logging.warning(f"OS version detection error: {e}")
+        logging.warning(f"OS version numeric parse error: {e}")
 
     # === Heartbeat ===
     metrics.append(f'heartbeat_timestamp{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {int(time.time())}')
