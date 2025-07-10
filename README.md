@@ -34,6 +34,11 @@
 | `disk_usage_percent`         | Procent użycia przestrzeni dyskowej                                 |
 | `process_count_total`        | Liczba aktualnie działających procesów                              |
 | `process_threads_total`      | Suma aktywnych wątków wszystkich procesów                           |
+|`process_cpu_usage_percent`   | Użycie CPU przez konkretny proces (>5%)                             |
+|`nvidia_driver_version_string`|	Wersja sterownika NVIDIA                                           |
+|`system_os_version_string`	   | Wersja systemu operacyjnego                                         |
+|`heartbeat_timestamp`	       | Znacznik czasu ostatniego wysłania metryk                           |
+|`up`	                         | Wartość 1 oznaczająca, że agent działa poprawnie                    |
 
 ---
 
