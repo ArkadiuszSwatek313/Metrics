@@ -106,7 +106,35 @@ def collect_metrics():
 
     # === Procesy ===
     metrics.append(f"process_count_total {len(psutil.pids())}")
-    metrics.append(f"process_threads_total {sum(p.num_threads() for p in psutil.process_iter())}")
+    total_threads = 0
+    for p in psutil.process_iter():
+        try:
+            total_threads += p.num_threads()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    metrics.append(f"process_threads_total {total_threads}")
+
+    try:
+        for proc in psutil.process_iter():
+            try:
+                proc.cpu_percent(interval=None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+        time.sleep(1)
+
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                cpu = proc.cpu_percent(interval=None)
+                if cpu > 5.0:
+                    name = proc.info['name'].replace(' ', '_').replace('-', '_')
+                    pid = proc.info['pid']
+                    metrics.append(
+                        f'process_cpu_usage_percent{{pid="{pid}",name="{name}",job="{JOB_NAME}",instance="{HOSTNAME}"}} {cpu:.2f}')
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        logging.warning(f"Process CPU usage error: {e}")
 
     # === GPU (NVIDIA) ===
     try:
@@ -129,7 +157,20 @@ def collect_metrics():
     except:
         pass
 
-    # === CPU temperature (Linux) ===
+    try:
+        output = subprocess.check_output(["nvidia-smi"], stderr=subprocess.STDOUT).decode()
+        match = re.search(r"Driver Version:\s+(\S+)", output)
+        if match:
+            driver_version = match.group(1)
+            metrics.append(f'nvidia_driver_version{{job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
+            metrics.append(f'# HELP nvidia_driver_version_string Driver version as label')
+            metrics.append(f'# TYPE nvidia_driver_version_string gauge')
+            metrics.append(
+                f'nvidia_driver_version_string{{version="{driver_version}",job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
+    except Exception as e:
+        logging.warning(f"GPU driver version error: {e}")
+
+    # === CPU temperature ===
     try:
         output = subprocess.check_output(['sensors']).decode('utf-8')
         for line in output.splitlines():
@@ -141,8 +182,23 @@ def collect_metrics():
     except:
         pass
 
-    return "\n".join(metrics) + "\n"
+    # === Ubuntu version ===
+    try:
+        with open("/etc/os-release") as f:
+            for line in f:
+                if line.startswith("PRETTY_NAME="):
+                    os_version = line.strip().split("=")[1].strip('"')
+                    break
+        metrics.append(f'# HELP system_os_version_string OS version as label')
+        metrics.append(f'# TYPE system_os_version_string gauge')
+        metrics.append(f'system_os_version_string{{version="{os_version}",job="{JOB_NAME}",instance="{HOSTNAME}"}} 1')
+    except Exception as e:
+        logging.warning(f"OS version detection error: {e}")
 
+    # === Heartbeat ===
+    metrics.append(f'heartbeat_timestamp{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {int(time.time())}')
+
+    return "\n".join(metrics) + "\n"
 
 def push_to_pushgateway(metrics: str):
     url = f"{PUSHGATEWAY_URL}/metrics/job/{JOB_NAME}/instance/{HOSTNAME}"
