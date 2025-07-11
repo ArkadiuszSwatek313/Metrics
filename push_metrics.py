@@ -98,14 +98,19 @@ def collect_metrics():
         metrics.append(f"disk_io_read_bytes_total {io.read_bytes}")
         metrics.append(f"disk_io_write_bytes_total {io.write_bytes}")
     try:
-        output = subprocess.check_output(['lsblk', '-b', '-dn', '-o', 'SIZE']).decode()
-        total_physical_disk_bytes = sum(int(line.strip()) for line in output.strip().splitlines())
-        metrics.append(f"# HELP physical_disk_total_bytes Total physical disk capacity (including unallocated)")
-        metrics.append(f"# TYPE physical_disk_total_bytes gauge")
+        output = subprocess.check_output(['lsblk', '-b', '-dn', '-o', 'SIZE,MOUNTPOINT']).decode()
+        used_on_partitions = 0
+        for line in output.strip().splitlines():
+            parts = line.strip().split(None, 1)
+            if len(parts) == 2 and parts[1]:
+                used_on_partitions += int(parts[0])
         metrics.append(
-            f"physical_disk_total_bytes{{job=\"{JOB_NAME}\",instance=\"{HOSTNAME}\"}} {total_physical_disk_bytes}")
+            f"# HELP physical_disk_used_bytes Total used space on physical disk (sum of all mounted partitions)")
+        metrics.append(f"# TYPE physical_disk_used_bytes gauge")
+        metrics.append(
+            f'physical_disk_used_bytes{{job="{JOB_NAME}",instance="{HOSTNAME}"}} {used_on_partitions}')
     except Exception as e:
-        logging.warning(f"Failed to get physical disk size: {e}")
+        logging.warning(f"Failed to get physical disk used size: {e}")
 
     # === Sieć ===
     net = psutil.net_io_counters()
@@ -156,7 +161,6 @@ def collect_metrics():
         total_gpu_mem = 0.0
 
         for idx, line in enumerate(output.strip().split('\n')):
-            # Dodano fan_speed jako ostatni element
             util, mem_used, mem_total, mem_free, power_draw, power_limit, temp, fan_speed = map(float, line.split(', '))
             total_gpu_mem += mem_total
 
