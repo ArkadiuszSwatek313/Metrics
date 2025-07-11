@@ -7,9 +7,9 @@
 `cd Metrics`
 
 ## 3. Środowisko wirtualne
-`python3 -m venv venv`
-`source venv/bin/activate`
-`pip install -r requirements.txt`
+`python3 -m venv venv`/
+`source venv/bin/activate`/
+`pip install -r requirements.txt`/
 
 ## 4. Konfiguracja adresu Pushgateway
 `echo 'PUSHGATEWAY_URL=http://xxx.xxx.xxx.xxx:9091' > .env`
