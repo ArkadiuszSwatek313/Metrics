@@ -110,13 +110,13 @@ WantedBy=multi-user.target
 ## Dysk
 | Metryka                         | Opis                                                 |
 |---------------------------------|------------------------------------------------------|
-|disk_used_bytes | zajęta przestrzeń dyskowa |
-|disk_total_bytes | całkowita przestrzeń dyskowa |
-|disk_free_bytes | wolna przestrzeń dyskowa |
-|disk_usage_percent | procent zużycia przestrzeni dyskowej |
-|disk_io_read_bytes_total | łączna liczba bajtów odczytanych z dysku |
-|disk_io_write_bytes_total | łączna liczba bajtów zapisanych na dysk |
-|physical_disk_used_bytes | suma użytej przestrzeni na wszystkich partycjach fizycznych |
+|`disk_used_bytes` | zajęta przestrzeń dyskowa |
+|`disk_total_bytes` | całkowita przestrzeń dyskowa |
+|`disk_free_bytes` | wolna przestrzeń dyskowa |
+|`disk_usage_percent` | procent zużycia przestrzeni dyskowej |
+|`disk_io_read_bytes_total` | łączna liczba bajtów odczytanych z dysku |
+|`disk_io_write_bytes_total` | łączna liczba bajtów zapisanych na dysk |
+|`physical_disk_used_bytes` | suma użytej przestrzeni na wszystkich partycjach fizycznych |
 
 
 ## Inne
