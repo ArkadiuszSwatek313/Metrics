@@ -22,7 +22,7 @@
 
 # Autostart
 ## 1. Tworzenie pliku
-`sudo nano /etc/systemd/system/push-metrics.service`
+`sudo nano /etc/systemd/system/push-metrics@.service`
 
 ## 2. Zawartość pliku
 [Unit]
