@@ -26,17 +26,25 @@
 
 ## 2. Zawartość pliku
 [Unit]
+
 Description=Push Metrics
+
 After=network.target
 
 [Service]
+
 Type=simple
+
 User=ubuntu
+
 WorkingDirectory=/home/ubuntu/Metrics
+
 ExecStart=/home/ubuntu/Metrics/venv/bin/python /home/ubuntu/Metrics/push_metrics.py
+
 Restart=always
 
 [Install]
+
 WantedBy=multi-user.target
 
 ## 3. Uruchamianie usługi 
