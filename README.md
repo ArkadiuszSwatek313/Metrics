@@ -1,5 +1,5 @@
 # Instalacja
-## 1. Zależności
+## 1. Instalacja zależności
 `sudo apt install -y python3 python3-venv git lm-sensors`
 
 ## 2. Klonowanie repozytorium
@@ -27,21 +27,24 @@
 ## 2. Zawartość pliku
 [Unit]
 
-Description=Push Metrics
+Description=Push Metrics for %i
 
 After=network.target
+
 
 [Service]
 
 Type=simple
 
-User=ubuntu
+User=%i
 
-WorkingDirectory=/home/ubuntu/Metrics
+WorkingDirectory=/home/%i/Metrics
 
-ExecStart=/home/ubuntu/Metrics/venv/bin/python /home/ubuntu/Metrics/push_metrics.py
+ExecStart=/home/%i/Metrics/venv/bin/python /home/%i/Metrics/push_metrics.py
 
 Restart=always
+
+
 
 [Install]
 
@@ -50,72 +53,81 @@ WantedBy=multi-user.target
 ## 3. Uruchamianie usługi 
 `sudo systemctl daemon-reexec`
 
-`sudo systemctl enable push-metrics`
+`sudo systemctl enable push-metrics@$(whoami)`
 
-`sudo systemctl start push-metrics`
-
-
+`sudo systemctl start push-metrics@$(whoami)`
 
 # Aktualizacja
 `cd Metrics`
 
-`git pull orign master`
+`git pull origin master`
 
 `pip install -r requirements.txt`
 
-`sudo systemctl restart push-metrics`
+`sudo systemctl restart push-metrics@$(whoami)`
 
 # Typy metryk
 
-## gauge - metryki o zmiennych wartościach w czasie
+## CPU
+| Metryka                         | Opis                                                 |
+|---------------------------------|------------------------------------------------------|
+|`cpu_usage_percent` | aktualne użycie CPU (wszystkich rdzeni) w procentach |
+|`cpu_load_average_1m` |średnie obciążenie systemu z ostatniej 1 minuty |
+|`cpu_load_average_5m` | średnie obciążenie systemu z ostatnich 5 minut |
+|`cpu_load_average_15m` | średnie obciążenie systemu z ostatnich 15 minut|
+|`cpu_count_logical` | liczba logicznych rdzeni CPU |
+|`cpu_count_physical` | liczba fizycznych rdzeni CPU|
+|`cpu_context_switches` | liczba przełączeń kontekstu CPU|
+|`cpu_interrupts` | liczba przerwań CPU|
+|`cpu_temperature` | temperatura CPU (z wielu czujników)|
 
-| Nazwa                        | Opis                                                                |
-|------------------------------|---------------------------------------------------------------------|
-| `gpu_utilization`            | Aktualne użycie GPU (%)                                             |
-| `gpu_memory_used`            | Ilość użytej pamięci GPU (MB)                                       |
-| `gpu_memory_total`           | Całkowita dostępna pamięć GPU (MB)                                  |
-| `gpu_memory_free`            | Dostępna (wolna) pamięć GPU (MB)                                    |
-| `gpu_temperature`            | Temperatura GPU (°C)                                                |
-| `gpu_power_watts`            | Aktualne zużycie energii przez GPU (W)                              |
-| `gpu_power_limit_watts`      | Limit poboru mocy dla GPU (W)                                       |
-| `cpu_temperature`            | Temperatura CPU (°C)                                                |
-| `cpu_usage_percent`          | Całkowite użycie CPU (%)                                            |
-| `cpu_load_average_1m`        | Średnie obciążenie CPU z ostatniej 1 minuty                         |
-| `cpu_load_average_5m`        | Średnie obciążenie CPU z ostatnich 5 minut                          |
-| `cpu_load_average_15m`       | Średnie obciążenie CPU z ostatnich 15 minut                         |
-| `cpu_count_logical`          | Liczba logicznych rdzeni CPU                                        |
-| `cpu_count_physical`         | Liczba fizycznych rdzeni CPU                                        |
-| `cpu_context_switches`       | Liczba przełączeń kontekstu CPU                                     |
-| `cpu_interrupts`             | Liczba przerwań obsłużonych przez CPU                               |
-| `memory_total_bytes`         | Całkowita dostępna pamięć RAM (bajty)                               |
-| `memory_used_bytes`          | Ilość aktualnie użytej pamięci RAM (bajty)                          |
-| `memory_free_bytes`          | Ilość wolnej pamięci RAM (bajty)                                    |
-| `memory_available_bytes`     | Ilość dostępnej pamięci RAM dla nowych procesów (bajty)             |
-| `memory_percent`             | Użycie pamięci RAM (%)                                              |
-| `swap_total_bytes`           | Całkowita dostępna przestrzeń swap (bajty)                          |
-| `swap_used_bytes`            | Używana przestrzeń swap (bajty)                                     |
-| `swap_percent`               | Procent użycia swap (%)                                             |
-| `disk_used_bytes`            | Ilość zajętego miejsca na dyskach (bajty)                           |
-| `disk_total_bytes`           | Całkowita przestrzeń dyskowa (bajty)                                |
-| `disk_free_bytes`            | Wolna przestrzeń dyskowa (bajty)                                    |
-| `disk_usage_percent`         | Procent użycia przestrzeni dyskowej                                 |
-| `process_count_total`        | Liczba aktualnie działających procesów                              |
-| `process_threads_total`      | Suma aktywnych wątków wszystkich procesów                           |
-|`process_cpu_usage_percent`   | Użycie CPU przez konkretny proces (>5%)                             |
-|`nvidia_driver_version_string`|	Wersja sterownika NVIDIA                                           |
-|`system_os_version_string`	   | Wersja systemu operacyjnego                                         |
-|`heartbeat_timestamp`	       | Znacznik czasu ostatniego wysłania metryk                           |
-|`up`	                         | Wartość 1 oznaczająca, że skrypt działa poprawnie                   |
+## GPU (NVIDIA)
+| Metryka                         | Opis                                                 |
+|---------------------------------|------------------------------------------------------|
+|`gpu_utilization` | wykorzystanie GPU w procentach|
+|`gpu_memory_used` | użycie pamięci GPU|
+|`gpu_memory_total` | całkowita pamięć GPU|
+|`gpu_memory_free` | dostępna pamięć GPU|
+|`gpu_power_watts` | aktualne zużycie energii przez GPU|
+|`gpu_power_limit_watts` | limit energii dla GPU|
+|`gpu_temperature` | temperatura GPU|
+|`gpu_fan_speed_percent` | prędkość wentylatora GPU w procentach|
+|`gpu_memory_total_sum` | suma całkowitej pamięci wszystkich GPU|
+|`nvidia_driver_version_numeric` | wersja sterownika NVIDIA jako liczba|
 
----
+## Pamięć RAM
+| Metryka                         | Opis                                                 |
+|---------------------------------|------------------------------------------------------|
+|`memory_total_bytes` | całkowita pamięć RAM |
+|`memory_used_bytes` | zajęta pamięć RAM |
+|`memory_free_bytes` | wolna pamięć RAM |
+|`memory_available_bytes` | dostępna pamięć RAM (dla aplikacji) |
+|`memory_percent` | procent zajętej pamięci RAM |
+|`swap_total_bytes` | całkowity rozmiar SWAP |
+|`swap_used_bytes` | zużyty SWAP |
+|`swap_percent` | procent użycia SWAP |
 
-## counter - metryki monotoniczne (rosnące)
+## Dysk
+| Metryka                         | Opis                                                 |
+|---------------------------------|------------------------------------------------------|
+|disk_used_bytes | zajęta przestrzeń dyskowa |
+|disk_total_bytes | całkowita przestrzeń dyskowa |
+|disk_free_bytes | wolna przestrzeń dyskowa |
+|disk_usage_percent | procent zużycia przestrzeni dyskowej |
+|disk_io_read_bytes_total | łączna liczba bajtów odczytanych z dysku |
+|disk_io_write_bytes_total | łączna liczba bajtów zapisanych na dysk |
+|physical_disk_used_bytes | suma użytej przestrzeni na wszystkich partycjach fizycznych |
 
-| Nazwa                        | Opis                                                                |
-|------------------------------|---------------------------------------------------------------------|
-| `disk_io_read_bytes_total`   | Całkowita liczba bajtów odczytanych z dysków                        |
-| `disk_io_write_bytes_total`  | Całkowita liczba bajtów zapisanych na dyskach                       |
-| `net_io_sent_bytes_total`    | Całkowita liczba bajtów wysłanych przez interfejsy sieciowe         |
-| `net_io_recv_bytes_total`    | Całkowita liczba bajtów odebranych przez interfejsy sieciowe        |
+
+## Inne
+| Metryka                         | Opis                                                 |
+|---------------------------------|------------------------------------------------------|
+|`net_io_sent_bytes_total` | łączna liczba wysłanych bajtów|
+|`net_io_recv_bytes_total` | łączna liczba odebranych bajtów|
+|`process_count_total` | liczba aktywnych procesów|
+|`process_threads_total` | liczba aktywnych wątków|
+|`process_cpu_usage_percent` | procent użycia CPU przez proces (jeśli > 5%)|
+|`system_os_version_numeric` | wersja systemu operacyjnego (Ubuntu) jako liczba|
+|`heartbeat_timestamp` | znacznik czasu ostatniego pushu (ms)|
 
 
