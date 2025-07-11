@@ -149,11 +149,17 @@ def collect_metrics():
     try:
         output = subprocess.check_output([
             'nvidia-smi',
-            '--query-gpu=utilization.gpu,memory.used,memory.total,memory.free,power.draw,power.limit,temperature.gpu',
+            '--query-gpu=utilization.gpu,memory.used,memory.total,memory.free,power.draw,power.limit,temperature.gpu,fan.speed',
             '--format=csv,noheader,nounits'
         ]).decode('utf-8')
+
+        total_gpu_mem = 0.0
+
         for idx, line in enumerate(output.strip().split('\n')):
-            util, mem_used, mem_total, mem_free, power_draw, power_limit, temp = map(float, line.split(', '))
+            # Dodano fan_speed jako ostatni element
+            util, mem_used, mem_total, mem_free, power_draw, power_limit, temp, fan_speed = map(float, line.split(', '))
+            total_gpu_mem += mem_total
+
             metrics.extend([
                 f'gpu_utilization{{gpu="{idx}"}} {util}',
                 f'gpu_memory_used{{gpu="{idx}"}} {mem_used}',
@@ -161,10 +167,13 @@ def collect_metrics():
                 f'gpu_memory_free{{gpu="{idx}"}} {mem_free}',
                 f'gpu_power_watts{{gpu="{idx}"}} {power_draw}',
                 f'gpu_power_limit_watts{{gpu="{idx}"}} {power_limit}',
-                f'gpu_temperature{{gpu="{idx}"}} {temp}'
+                f'gpu_temperature{{gpu="{idx}"}} {temp}',
+                f'gpu_fan_speed_percent{{gpu="{idx}"}} {fan_speed}'
             ])
-    except:
-        pass
+
+        metrics.append(f'gpu_memory_total_sum {total_gpu_mem}')
+    except Exception as e:
+        logging.warning(f"GPU metric collection error: {e}")
 
     try:
         output = subprocess.check_output(["nvidia-smi"], stderr=subprocess.STDOUT).decode()
